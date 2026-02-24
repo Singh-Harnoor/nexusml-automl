@@ -1,0 +1,5 @@
+{
+  "name": "NexusML: AutoML Workflow Orchestrator",
+  "description": "A lightweight, AI-assisted MLOps platform for automating data pipelines, model training, and performance monitoring.",
+  "requestFramePermissions": []
+}
