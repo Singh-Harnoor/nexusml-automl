@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "homepage": "https://Sohal-Harnoor.github.io/nexusml-automl",
-"scripts": {
+  "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
@@ -20,6 +20,7 @@
     "adm-zip": "^0.5.16",
     "better-sqlite3": "^12.4.1",
     "clsx": "^2.1.1",
+    "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
