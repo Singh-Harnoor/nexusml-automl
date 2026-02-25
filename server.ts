@@ -9,7 +9,7 @@ import Papa from "papaparse";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database("automl.db");
+const db = new Database("/tmp/automl.db");
 
 // Initialize Database
 db.exec(`
@@ -56,9 +56,10 @@ if (!hasDataColumn) {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   // API Routes
   app.get("/api/datasets", (req, res) => {

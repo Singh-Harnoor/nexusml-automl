@@ -5,6 +5,7 @@ import DatasetList from './components/DatasetList';
 import ExperimentList from './components/ExperimentList';
 import Settings from './components/Settings';
 import Visualization from './components/Visualization';
+import About from './components/About'; 
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
@@ -22,6 +23,8 @@ export default function App() {
         return <ExperimentList />;
       case 'settings':
         return <Settings />;
+      case 'about':
+        return <About />;
       default:
         return <DashboardOverview />;
     }

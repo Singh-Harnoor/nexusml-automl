@@ -12,7 +12,8 @@ import {
   Download,
   X,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Dataset } from '../types';
@@ -49,33 +50,65 @@ export default function DatasetList() {
     if (!file) return;
 
     setIsUploading(true);
+    
+    let rowCount = 0;
+    const sampleData: any[] = [];
+    let fields: string[] = [];
+
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: async (results) => {
+      worker: true,
+      step: (results) => {
+        rowCount++;
+        if (sampleData.length < 500) {
+          sampleData.push(results.data);
+        }
+        if (rowCount === 1 && results.meta.fields) {
+          fields = results.meta.fields;
+        }
+      },
+      complete: async () => {
         const id = Math.random().toString(36).substring(7);
-        // Store up to 500 rows for visualization
-        const sampleData = results.data.slice(0, 500);
         
         const newDataset = {
           id,
           name: file.name.replace('.csv', ''),
           type: 'csv',
           size: file.size,
-          rows: results.data.length,
-          columns: results.meta.fields || [],
+          rows: rowCount,
+          columns: fields,
           data: sampleData
         };
 
-        await fetch('/api/datasets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newDataset)
-        });
-        
-        setIsUploading(false);
-        setShowImportModal(false);
-        fetchDatasets();
+        try {
+          const res = await fetch('/api/datasets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newDataset)
+          });
+
+          if (!res.ok) {
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              const errorData = await res.json();
+              alert(`Upload failed: ${errorData.error || 'Unknown error'}`);
+            } else {
+              const errorText = await res.text();
+              console.error("Server Error Response:", errorText);
+              alert(`Upload failed with status ${res.status}. Check console for details.`);
+            }
+          }
+          
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          setIsUploading(false);
+          setShowImportModal(false);
+          fetchDatasets();
+        } catch (error) {
+          console.error('Upload Error:', error);
+          setIsUploading(false);
+          alert('Failed to upload dataset to server');
+        }
       },
       error: (error) => {
         console.error('CSV Parse Error:', error);
@@ -310,8 +343,12 @@ export default function DatasetList() {
               {importTab === 'local' ? (
                 <div className="space-y-4">
                   <div 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer group"
+                    onClick={() => !isUploading && fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${
+                      isUploading 
+                        ? 'border-indigo-200 bg-indigo-50/50 cursor-not-allowed' 
+                        : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'
+                    }`}
                   >
                     <input 
                       type="file" 
@@ -320,11 +357,17 @@ export default function DatasetList() {
                       accept=".csv" 
                       className="hidden" 
                     />
-                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 group-hover:bg-white group-hover:text-indigo-600 transition-colors">
-                      <Upload size={24} />
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${
+                      isUploading ? 'bg-indigo-100 text-indigo-600 animate-pulse' : 'bg-slate-50 text-slate-400 group-hover:bg-white group-hover:text-indigo-600'
+                    }`}>
+                      {isUploading ? <Activity size={24} className="animate-spin" /> : <Upload size={24} />}
                     </div>
-                    <p className="text-sm font-bold text-slate-900">Click to upload CSV</p>
-                    <p className="text-xs text-slate-500 mt-1">Max file size: 50MB</p>
+                    <p className="text-sm font-bold text-slate-900">
+                      {isUploading ? 'Uploading & Parsing...' : 'Click to upload CSV'}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {isUploading ? 'Please wait while we process your data' : 'Max file size: 50MB'}
+                    </p>
                   </div>
                   <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl">
                     <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />

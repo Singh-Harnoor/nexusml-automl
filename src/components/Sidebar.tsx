@@ -6,7 +6,8 @@ import {
   Settings, 
   ChevronRight,
   Cpu,
-  BarChart3
+  BarChart3,
+  Info
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -27,6 +28,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'visualization', label: 'Visualization', icon: BarChart3 },
     { id: 'experiments', label: 'Experiments', icon: Beaker },
     { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'about', label: 'About', icon: Info },
   ];
 
   return (
